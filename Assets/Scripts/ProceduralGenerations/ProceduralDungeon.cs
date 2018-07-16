@@ -30,6 +30,11 @@ namespace DFC
         public Vector2 roomSize = new Vector2(25, 25);
         public int roomCount;
 
+        [Header("Hallways")]
+        public int hallwayWidth = 4;
+        public List<Hallway> hallways = new List<Hallway>();
+        public int hallwayCount;
+
         [Header("Sprites")]
         public GameObject[] floorTiles;
         public GameObject[] wallTiles;
@@ -41,7 +46,8 @@ namespace DFC
 
 
         private List<Room> allRooms = new List<Room>();
-
+        private GameObject hallwayHolder;
+        private GameObject roomHolder;
 
         private void Awake()
         {
@@ -52,6 +58,8 @@ namespace DFC
         // Use this for initialization
         void Start()
         {
+            hallwayHolder = new GameObject("Hallway Parent");
+            roomHolder = new GameObject("Room Parent");
             GenerateDungeon();
         }
 
@@ -96,7 +104,7 @@ namespace DFC
         private Room CreateRoom(Vector2 center)
         {
             GameObject go = new GameObject(string.Format("Room {0}", roomCount++));
-            go.transform.SetParent(boardHolder.transform);
+            go.transform.SetParent(roomHolder.transform);
             Room r = go.AddComponent<Room>();
 
             int width = (int)(MathHelpers.GetBellCurvePoint(Random.Range(.25f, 1.5f), 1f) * roomSize.x);
@@ -108,6 +116,15 @@ namespace DFC
             //Debug.LogFormat("Width: {0} Height: {1}", width, height);
             r.SetupRoom(center, width, height);
             return r;
+        }
+
+        private Hallway CreateHallway(LineSegment line)
+        {
+            GameObject go = new GameObject(string.Format("Hallway {0}", hallwayCount++));
+            go.transform.SetParent(hallwayHolder.transform);
+            Hallway h = go.AddComponent<Hallway>();
+            h.Generate(line, hallwayWidth);
+            return h;
         }
 
         private void EnablePhysics(bool b)
@@ -172,13 +189,13 @@ namespace DFC
             delaunayTriangulation = v.DelaunayTriangulation();
         }
 
-        private void GenerateCorridors()
+        private void GenerateHallways()
         {
             for(int i = 0; i < spanningTree.Count; i++)
             {
-
+                CreateHallway(spanningTree[i]);
             }
-        }
+        } //I need to connect the edges of the rooms, not the centers
 
         private IEnumerator GenerationCoroutine()
         {
@@ -202,9 +219,10 @@ namespace DFC
             GetBounds();
             VoronoiGeneration();
 
-            //.. Corridors
+            //.. Hallways
 
             DisableSecondaryRooms();
+            GenerateHallways();
 
         }
 

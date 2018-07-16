@@ -72,25 +72,9 @@ namespace DFC
                     pos.x -= row;
                     pos.y -= col;
 
-                    InstantiateFromArray(ProceduralDungeon.Instance.floorTiles, pos);
+                    TileGeneration.InstantiateFromArray(ProceduralDungeon.Instance.floorTiles, pos, this.transform);
                 }
             }
-        }
-
-        private GameObject InstantiateFromArray(GameObject[] prefabs, Vector2 pos)
-        {
-            // Create a random index for the array.
-            int randomIndex = UnityEngine.Random.Range(0, prefabs.Length);
-
-            // The position to be instantiated at is based on the coordinates.
-            Vector3 position = new Vector3(pos.x, pos.y, 0f);
-
-            // Create an instance of the prefab from the random index of the array.
-            GameObject tileInstance = Instantiate(prefabs[randomIndex], position, Quaternion.identity) as GameObject;
-
-            // Set the tile's parent to the board holder.
-            tileInstance.transform.parent = this.transform;
-            return tileInstance;
         }
     }
 }
