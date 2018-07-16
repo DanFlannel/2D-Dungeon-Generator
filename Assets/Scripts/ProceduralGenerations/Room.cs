@@ -21,7 +21,7 @@ namespace DFC
 
         public void SetupRoom(Vector2 center, int height, int width)
         {
-            this.height = (height %2 != 0) ? height + 1 : height;
+            this.height = (height % 2 != 0) ? height + 1 : height;
             this.width = (width % 2 != 0) ? width + 1 : width;
             this.center = new Vector2(Mathf.Floor(center.x), Mathf.Floor(center.y));
 

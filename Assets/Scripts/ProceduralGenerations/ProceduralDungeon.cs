@@ -78,8 +78,18 @@ namespace DFC
                 int size = r.width * r.height;
 
                 if(size >= primaryRoomSize) { primaryRooms.Add(r); }
-                else { secondaryRooms.Add(r); }
+                else {
+                    secondaryRooms.Add(r);
+                }
                 allRooms.Add(r);
+            }
+        }
+
+        private void DisableSecondaryRooms()
+        {
+            for(int i = 0; i < secondaryRooms.Count; i++)
+            {
+                secondaryRooms[i].gameObject.SetActive(false);
             }
         }
 
@@ -172,7 +182,11 @@ namespace DFC
 
         private IEnumerator GenerationCoroutine()
         {
+            //.. Inital Generation
+
             GenerateRooms();
+
+            //.. Spread Via Physics
 
             Time.timeScale = 10f;
             EnablePhysics(false);
@@ -182,9 +196,16 @@ namespace DFC
             Time.timeScale = 1f;
             EnablePhysics(true);
 
+            //.. Voroni Setup and Generation
+
             RoundPositions();
             GetBounds();
             VoronoiGeneration();
+
+            //.. Corridors
+
+            DisableSecondaryRooms();
+
         }
 
         void OnDrawGizmos()
