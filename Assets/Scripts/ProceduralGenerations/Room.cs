@@ -26,15 +26,13 @@ namespace DFC
             this.center = new Vector2(Mathf.Floor(center.x), Mathf.Floor(center.y));
 
             SetupPhysicsCollisions();
-            SetBounds();
+            SetCollider();
+            CalculateBounds();
             EnableTiles();
         }
 
-        private void SetBounds()
+        public void CalculateBounds()
         {
-            coll.transform.position = center;
-            coll.offset = new Vector2(.5f, .5f);
-            coll.size = new Vector2(width, height);
 
             int halfHeight = height / 2;
             int halfWidth = width / 2;
@@ -46,6 +44,13 @@ namespace DFC
             upperRight = center;
             upperRight.x += halfWidth;
             upperRight.y += halfHeight;
+        }
+
+        private void SetCollider()
+        {
+            coll.transform.position = center;
+            coll.offset = new Vector2(.5f, .5f);
+            coll.size = new Vector2(width, height);
         }
 
         private void SetupPhysicsCollisions()

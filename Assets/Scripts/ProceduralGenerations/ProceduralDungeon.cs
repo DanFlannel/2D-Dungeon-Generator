@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Delaunay;
+using Delaunay.Geo;
 
 namespace DFC
 {
@@ -16,23 +18,30 @@ namespace DFC
         public GameObject boardHolder;
 
         [Header("Base Size")]
-        public Vector2 baseCenter = new Vector2(50, 50);
         public float radius = 25f;
-        public int rows = 100;
-        public int columns = 100;
+        public Vector2 center;
+        public Vector2 size;
 
         [Header("Rooms")]
-
         public List<Room> primaryRooms = new List<Room>();
         public List<Room> secondaryRooms = new List<Room>();
 
-        public Vector2 numOfRooms;
-        public Vector2 roomSize = new Vector2(6,10);
+        public Vector2 numOfRooms = new Vector2(35, 40);
+        public Vector2 roomSize = new Vector2(25, 25);
         public int roomCount;
 
         [Header("Sprites")]
         public GameObject[] floorTiles;
         public GameObject[] wallTiles;
+
+        [Header("Tree")]
+        public List<LineSegment> edges = null;
+        public List<LineSegment> spanningTree;
+        public List<LineSegment> delaunayTriangulation;
+
+
+        private List<Room> allRooms = new List<Room>();
+
 
         private void Awake()
         {
@@ -62,7 +71,7 @@ namespace DFC
 
         private void GenerateRooms()
         {
-            int primaryRoomSize = (int)(roomSize.x * 1.15f) * (int)(roomSize.y * 1.15f);
+            int primaryRoomSize = (int)(roomSize.x * 1f) * (int)(roomSize.y * 1f);
             for (int i = 0; i < numOfRooms.RandomInt(); i++)
             {
                 Room r = CreateRoom(getRandomPointInCircle(radius));
@@ -70,6 +79,7 @@ namespace DFC
 
                 if(size >= primaryRoomSize) { primaryRooms.Add(r); }
                 else { secondaryRooms.Add(r); }
+                allRooms.Add(r);
             }
         }
 
@@ -103,6 +113,63 @@ namespace DFC
             }
         }
 
+        private void RoundPositions()
+        {
+            for(int i = 0; i < allRooms.Count; i++)
+            {
+                Vector2 center = allRooms[i].transform.position.RoundToInt();
+                allRooms[i].transform.position = center;
+                allRooms[i].center = center;
+                allRooms[i].CalculateBounds();
+            }
+        }
+
+        private void GetBounds()
+        {
+            int minX = 0;
+            int maxX = 0;
+            int minY = 0;
+            int maxY = 0;
+
+            for(int i = 0; i < allRooms.Count; i++)
+            {
+                minX = (minX < (int)allRooms[i].lowerLeft.x) ? minX :(int)allRooms[i].lowerLeft.x;
+                maxX = (maxX > (int)allRooms[i].upperRight.x) ? maxX : (int)allRooms[i].upperRight.x;
+
+                minY = (minY < (int)allRooms[i].lowerLeft.y) ? minY : (int)allRooms[i].lowerLeft.y;
+                maxY = (maxY > (int)allRooms[i].upperRight.y) ? maxY : (int)allRooms[i].upperRight.y;
+            }
+
+            size = new Vector2((maxX - minX), (maxY - minY));
+            center = new Vector2((Mathf.Abs(maxX) - Mathf.Abs(minX)) / 2f, (Mathf.Abs(maxY) - Mathf.Abs(minY)) / 2f);
+        }
+
+        private void VoronoiGeneration()
+        {
+            List<Vector2> points = new List<Vector2>();
+            List<uint> colors = new List<uint>();
+
+            for(int i = 0; i < primaryRooms.Count; i++)
+            {
+                points.Add(primaryRooms[i].center);
+                colors.Add(0);
+            }
+
+            Delaunay.Voronoi v = new Delaunay.Voronoi(points, colors, new Rect(center,size));
+
+            edges = v.VoronoiDiagram();
+            spanningTree = v.SpanningTree(KruskalType.MINIMUM);
+            delaunayTriangulation = v.DelaunayTriangulation();
+        }
+
+        private void GenerateCorridors()
+        {
+            for(int i = 0; i < spanningTree.Count; i++)
+            {
+
+            }
+        }
+
         private IEnumerator GenerationCoroutine()
         {
             GenerateRooms();
@@ -115,9 +182,35 @@ namespace DFC
             Time.timeScale = 1f;
             EnablePhysics(true);
 
-
-
+            RoundPositions();
+            GetBounds();
+            VoronoiGeneration();
         }
 
+        void OnDrawGizmos()
+        {
+            Gizmos.color = Color.magenta;
+            if (delaunayTriangulation != null)
+            {
+                for (int i = 0; i < delaunayTriangulation.Count; i++)
+                {
+                    Vector2 left = (Vector2)delaunayTriangulation[i].p0;
+                    Vector2 right = (Vector2)delaunayTriangulation[i].p1;
+                    Gizmos.DrawLine((Vector3)left, (Vector3)right);
+                }
+            }
+
+            if (spanningTree != null)
+            {
+                Gizmos.color = Color.green;
+                for (int i = 0; i < spanningTree.Count; i++)
+                {
+                    LineSegment seg = spanningTree[i];
+                    Vector2 left = (Vector2)seg.p0;
+                    Vector2 right = (Vector2)seg.p1;
+                    Gizmos.DrawLine((Vector3)left, (Vector3)right);
+                }
+            }
+        }
     }
 }
