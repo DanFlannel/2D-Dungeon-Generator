@@ -14,9 +14,6 @@ namespace DFC
         public static Dictionary<Vector2, GameObject> tileDict = new Dictionary<Vector2, GameObject>();
         public static Dictionary<Vector2, GameObject> wallDict = new Dictionary<Vector2, GameObject>();
 
-        [Header("Holder")]
-        public GameObject boardHolder;
-
         [Header("Base Size")]
         public float radius = 25f;
         public Vector2 center;
@@ -35,17 +32,28 @@ namespace DFC
         public List<Hallway> hallways = new List<Hallway>();
         public int hallwayCount;
 
+        [Header("Debuggers")]
+        public bool debugStartPoint;
+        public bool debugEndPoint;
+        public bool debugMidPoint;
+        public bool drawLines;
+        public bool showTree;
+
+        private List<HallwayPoints> hallwayPoints = new List<HallwayPoints>();
+
         [Header("Sprites")]
         public GameObject[] floorTiles;
         public GameObject[] wallTiles;
 
-        [Header("Tree")]
-        public List<LineSegment> edges = null;
-        public List<LineSegment> spanningTree;
-        public List<LineSegment> delaunayTriangulation;
+        //.. Tree
+        private List<LineSegment> edges = null;
+        private List<LineSegment> spanningTree;
+        private List<LineSegment> delaunayTriangulation;
 
 
         private List<Room> allRooms = new List<Room>();
+
+        //Game object holders
         private GameObject hallwayHolder;
         private GameObject roomHolder;
 
@@ -118,12 +126,13 @@ namespace DFC
             return r;
         }
 
-        private Hallway CreateHallway(LineSegment line)
+        private Hallway CreateHallway(HallwayPoints points)
         {
             GameObject go = new GameObject(string.Format("Hallway {0}", hallwayCount++));
             go.transform.SetParent(hallwayHolder.transform);
             Hallway h = go.AddComponent<Hallway>();
-            h.Generate(line, hallwayWidth);
+            h.Generate(points, hallwayWidth);
+            hallways.Add(h);
             return h;
         }
 
@@ -193,9 +202,10 @@ namespace DFC
         {
             for(int i = 0; i < spanningTree.Count; i++)
             {
-                CreateHallway(spanningTree[i]);
+                hallwayPoints.Add(new HallwayPoints(spanningTree[i], ref allRooms, hallwayWidth));
+                CreateHallway(hallwayPoints[i]);
             }
-        } //I need to connect the edges of the rooms, not the centers
+        } 
 
         private IEnumerator GenerationCoroutine()
         {
@@ -233,13 +243,14 @@ namespace DFC
             {
                 for (int i = 0; i < delaunayTriangulation.Count; i++)
                 {
+                    break;
                     Vector2 left = (Vector2)delaunayTriangulation[i].p0;
                     Vector2 right = (Vector2)delaunayTriangulation[i].p1;
                     Gizmos.DrawLine((Vector3)left, (Vector3)right);
                 }
             }
 
-            if (spanningTree != null)
+            if (spanningTree != null && showTree)
             {
                 Gizmos.color = Color.green;
                 for (int i = 0; i < spanningTree.Count; i++)
@@ -248,6 +259,35 @@ namespace DFC
                     Vector2 left = (Vector2)seg.p0;
                     Vector2 right = (Vector2)seg.p1;
                     Gizmos.DrawLine((Vector3)left, (Vector3)right);
+                }
+            }
+
+            for(int i = 0; i < hallwayPoints.Count; i++)
+            {
+                if (debugStartPoint)
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawCube(hallwayPoints[i].startingPoint, Vector3.one);
+                }
+
+                if (debugEndPoint)
+                {
+                    Gizmos.color = Color.blue;
+                    Gizmos.DrawCube(hallwayPoints[i].endPoint, Vector3.one);
+                }
+
+                if (debugMidPoint)
+                {
+                    Gizmos.color = Color.yellow;
+                    Gizmos.DrawCube(hallwayPoints[i].midPoint, Vector3.one);
+                }
+
+                if(drawLines)
+                {
+                    Gizmos.color = Color.magenta;
+                    Gizmos.DrawLine(hallwayPoints[i].startingPoint, hallwayPoints[i].endPoint);
+                    //Gizmos.color = Color.black;
+                    //Gizmos.DrawLine(hallwayPoints[i].midPoint, hallwayPoints[i].endPoint);
                 }
             }
         }

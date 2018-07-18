@@ -7,56 +7,47 @@ namespace DFC
 {
     public class Hallway : MonoBehaviour
     {
-
-        [Header("Info")]
-        public Vector2 startingPoint;
-        public Vector2 endpoint;
-        public Vector2 cornerPoint;
+        public HallwayPoints points;
 
         private BoxCollider2D col1;
         private BoxCollider2D col2;
 
         private int width;
 
-        public void Generate(LineSegment line, int width)
+        public void Generate(HallwayPoints points, int width)
         {
-            startingPoint = line.p0.Value;
-            endpoint = line.p1.Value;
-
+            this.points = points;
             col1 = this.gameObject.AddComponent<BoxCollider2D>();
 
             this.width = width;
 
 
-            GenerateHallwayTiles();
+            //GenerateHallwayTiles();
 
-            this.transform.position = startingPoint;
+            this.transform.position = points.midPoint;
         }
 
         private void GenerateHallwayTiles()
         {
-            if (startingPoint.x - endpoint.x > width)
+            if (points.startingPoint.x - points.endPoint.x > width)
             {
-                cornerPoint = new Vector2(endpoint.x, startingPoint.y);
-                CreateXTiles(startingPoint, cornerPoint);
-                CreateYTiles(cornerPoint, endpoint);
+                CreateXTiles(points.startingPoint, points.endPoint);
+                CreateYTiles(points.midPoint, points.endPoint);
             }
-            else if (startingPoint.y - endpoint.y > width)
+            else if (points.startingPoint.y - points.endPoint.y > width)
             {
-                cornerPoint = new Vector2(startingPoint.x, endpoint.y);
-                CreateYTiles(startingPoint, cornerPoint);
-                CreateXTiles(cornerPoint, endpoint);
+                CreateYTiles(points.startingPoint, points.midPoint);
+                CreateXTiles(points.midPoint, points.startingPoint);
             }
             else
             {
-                cornerPoint = Vector2.zero;
-                if (Mathf.Abs(startingPoint.x - endpoint.x) <= Mathf.Abs(startingPoint.y - endpoint.y))
+                if (Mathf.Abs(points.startingPoint.x - points.endPoint.x) <= Mathf.Abs(points.startingPoint.y - points.endPoint.y))
                 {
-                    CreateXTiles(startingPoint, endpoint);
+                    CreateXTiles(points.startingPoint, points.endPoint);
                 }
-                else if (Mathf.Abs(startingPoint.y - endpoint.y) > Mathf.Abs(startingPoint.y - endpoint.y))
+                else if (Mathf.Abs(points.startingPoint.y - points.endPoint.y) > Mathf.Abs(points.startingPoint.y - points.endPoint.y))
                 {
-                    CreateYTiles(startingPoint, endpoint);
+                    CreateYTiles(points.startingPoint, points.endPoint);
                 }
             }
         }
