@@ -50,6 +50,7 @@ namespace DFC
             Vector2 adjStartingPoint = startingPoint;
             Vector2 adjEndPoint = endPoint;
 
+            //try endpoints
             if (Mathf.Abs(startingPoint.x - midPoint.x) > Mathf.Abs(startingPoint.y - midPoint.x))
             {
                 adjStartingPoint.x = (startingPoint.x > endPoint.x) ? adjStartingPoint.x - (r0.width / 2) : adjStartingPoint.x + (r0.width / 2);
